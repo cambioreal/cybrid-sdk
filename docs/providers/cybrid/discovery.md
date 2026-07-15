@@ -145,3 +145,29 @@ sob demanda de produto.
 
 Cybrid segue o padrão canônico SDK/gateway standalone (perfil `Async`). Decisões locais: token
 por scope via request option; subconjunto explícito da spec; webhooks fora do gateway v1.
+
+## 12. Adendo — extração completa do legado (2026-07-15, pós-publicação 0.1.0)
+
+A leitura integral dos 13 arquivos do legado (subagente dedicado) corrigiu/enriqueceu a descoberta:
+
+1. **O fluxo do legado é 100% fiat USD** — nenhum asset cripto aparece nos 13 arquivos (o
+   trading USDC visto nos dados vivos do sandbox vem de outra época/uso). Quotes/transfers do
+   legado: `funding` (external bank account, ACH) e `book_transfer` (interno bank↔customer);
+   NÃO há uso de `trades` no legado.
+2. **`accept-version: 2025-10-01`** fixado em toda request do legado — incorporado ao SDK 0.1.1
+   (`CybridOptions.ApiVersion`, default igual ao legado).
+3. **Identity verification usa também `external_bank_account_guid`** (`{type: bank_account,
+   method: account_ownership}`) e `expected_behaviours: ["passed_immediately"]` SÓ em dev —
+   campos adicionados ao request no 0.1.1.
+4. **EBA raw routing do legado usa `counterparty_bank_account_details`**
+   (`{payment_rail, bank_code_type: "ABA", bank_code, account_identifier}`) — nome distinto do
+   `counterparty_bank_account` da spec v0.129; ambos expostos no 0.1.1.
+5. **Sem retry/idempotência/paginação no legado**; `verify: false` (TLS desabilitado — defeito
+   do legado, NÃO replicado; o SDK valida TLS normalmente).
+6. **Webhook handler do legado (`PayoutNotification`)**: só `identity_verification.*` e
+   `transfer.*`; ignora `storing`; SEMPRE re-consulta o recurso; roteia por `side`; trata
+   `failure_code == "refresh_required"` como exigência de re-login Plaid. Confirma a decisão §7
+   (webhook = gatilho; GET = verdade).
+7. **Fluxo de onboarding completo** (customer → KYC → account fiat → counterparty + watchlists →
+   EBA + account_ownership → deposit bank account) documentado na íntegra na extração; o
+   `files:read` (download de documentos KYC) segue fora do escopo do SDK (decisão).

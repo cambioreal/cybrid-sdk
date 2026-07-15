@@ -38,6 +38,13 @@ public sealed class CybridOptions
     /// <summary>Timeout de cada requisição HTTP.</summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// Versão da API pinada via header <c>accept-version</c> em toda requisição — o legado fixa
+    /// <c>2025-10-01</c> (achado da extração completa do legado, 2026-07-15). Vazio = não enviar
+    /// (a Cybrid serve a versão default). Default mantém o pin do legado, deliberadamente.
+    /// </summary>
+    public string ApiVersion { get; set; } = "2025-10-01";
+
     /// <summary>Endereço base efetivo da Bank API.</summary>
     public Uri ResolveBaseAddress() => BaseAddress ?? Environment.GetBaseAddress();
 

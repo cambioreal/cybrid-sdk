@@ -20,6 +20,13 @@ public sealed record CreateCybridExternalBankAccountRequest
     public string? PlaidAccountId { get; init; }
     public string? PlaidProcessorToken { get; init; }
     public JsonElement? CounterpartyBankAccount { get; init; }
+
+    /// <summary>
+    /// Forma usada pelo legado para ACH raw routing (<c>counterparty_bank_account_details</c>:
+    /// <c>{payment_rail, bank_code_type: "ABA", bank_code, account_identifier}</c>) — nome de
+    /// campo distinto do <c>counterparty_bank_account</c> da spec v0.129; ambos expostos.
+    /// </summary>
+    public JsonElement? CounterpartyBankAccountDetails { get; init; }
     public CybridName? CounterpartyName { get; init; }
     public CybridAddress? CounterpartyAddress { get; init; }
     public string? CounterpartyEmailAddress { get; init; }

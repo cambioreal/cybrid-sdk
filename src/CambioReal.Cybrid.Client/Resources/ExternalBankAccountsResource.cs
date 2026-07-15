@@ -24,6 +24,17 @@ public sealed class ExternalBankAccountsResource
         client.GetAsync<CybridExternalBankAccount>(
             CybridPaths.ExternalBankAccount(guid), CybridScopes.ExternalBankAccountsRead, cancellationToken);
 
+    /// <summary>
+    /// Consulta uma conta externa com refresh de saldo — padrão do legado
+    /// (<c>?force_balance_refresh=true&amp;include_balances=true&amp;include_pii=true</c>; exige o
+    /// scope adicional <c>external_bank_accounts:pii:read</c>).
+    /// </summary>
+    public Task<CybridExternalBankAccount> GetWithBalancesAsync(string guid, CancellationToken cancellationToken = default) =>
+        client.GetAsync<CybridExternalBankAccount>(
+            $"{CybridPaths.ExternalBankAccount(guid)}?force_balance_refresh=true&include_balances=true&include_pii=true",
+            "external_bank_accounts:read external_bank_accounts:pii:read",
+            cancellationToken);
+
     /// <summary>Registra uma conta externa. <c>POST external_bank_accounts</c>. Escrita não financeira; cleanup = <see cref="DeleteAsync"/>.</summary>
     public Task<CybridExternalBankAccount> CreateAsync(
         CreateCybridExternalBankAccountRequest request, CancellationToken cancellationToken = default) =>

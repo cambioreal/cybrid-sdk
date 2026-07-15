@@ -68,6 +68,12 @@ public static class CybridServiceCollectionExtensions
 
         client.BaseAddress = options.ResolveBaseAddress();
         client.Timeout = options.Timeout;
+
+        // Pin de versão da API (accept-version) — paridade com o legado (2025-10-01).
+        if (!string.IsNullOrWhiteSpace(options.ApiVersion))
+        {
+            client.DefaultRequestHeaders.TryAddWithoutValidation("accept-version", options.ApiVersion);
+        }
     }
 
     private static void ConfigureAuthTransport(IServiceProvider provider, HttpClient client)
