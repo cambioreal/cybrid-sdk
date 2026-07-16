@@ -10,11 +10,21 @@ public sealed class QuotesResource
 
     internal QuotesResource(CybridClient client) => this.client = client;
 
-    /// <summary>Lista cotações do bank. <c>GET quotes</c> — validado ao vivo (94 reais).</summary>
+    /// <summary>
+    /// Lista cotações do bank. <c>GET quotes</c> — validado ao vivo (94 reais). Filtros opcionais
+    /// confirmados na spec oficial (<c>guid</c>, <c>product_type</c>, <c>customer_guid</c>,
+    /// <c>side</c>; <c>bank_guid</c> é sempre o configurado, não exposto).
+    /// </summary>
     public Task<CybridListPage<CybridQuote>> ListAsync(
-        int page = 0, int perPage = 20, CancellationToken cancellationToken = default) =>
+        int page = 0, int perPage = 20, string? guid = null, string? productType = null,
+        string? customerGuid = null, string? side = null, CancellationToken cancellationToken = default) =>
         client.GetAsync<CybridListPage<CybridQuote>>(
-            CybridPaths.List(CybridPaths.Quotes, client.BankGuid, page, perPage),
+            CybridPaths.List(CybridPaths.Quotes, client.BankGuid, page, perPage,
+                CybridPaths.Filters(
+                    ("guid", guid),
+                    ("product_type", productType),
+                    ("customer_guid", customerGuid),
+                    ("side", side))),
             CybridScopes.QuotesRead,
             cancellationToken);
 

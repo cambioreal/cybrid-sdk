@@ -35,6 +35,39 @@ public sealed record CreateCybridQuoteRequest
     public string? SourceAccountGuid { get; init; }
     public string? DestinationAccountGuid { get; init; }
     public string? NetworkAddress { get; init; }
+
+    /// <summary>Fees customizadas da cotação (até 2). Opcional para os product_types trading/funding/crypto_transfer/lightning_transfer/trading_exit.</summary>
+    public IReadOnlyList<CybridQuoteFee>? Fees { get; init; }
+
+    /// <summary>Contas de destino para transações em lote em blockchains UTXO. Opcional quando <c>product_type: crypto_transfer</c>.</summary>
+    public IReadOnlyList<CybridQuoteDestinationAccount>? DestinationAccounts { get; init; }
+
+    /// <summary>Guid do trade relacionado — só presente em trades <c>exit</c>. Obrigatório quando <c>product_type: trading_exit</c>.</summary>
+    public string? ReferenceTradeGuid { get; init; }
+}
+
+/// <summary>Fee customizada de uma cotação — spec oficial (<c>PostFee</c>).</summary>
+public sealed record CybridQuoteFee
+{
+    /// <summary>Valores da spec: <c>spread</c>, <c>fixed</c>.</summary>
+    public required string Type { get; init; }
+
+    /// <summary>Percentual em basis points — obrigatório quando <see cref="Type"/> é <c>spread</c>.</summary>
+    public long? SpreadFee { get; init; }
+
+    /// <summary>Valor fixo (fiat) — obrigatório quando <see cref="Type"/> é <c>fixed</c>.</summary>
+    public long? FixedFee { get; init; }
+}
+
+/// <summary>Entrada de conta de destino para quotes crypto_transfer em lote — spec oficial (<c>PostQuoteEntry</c>).</summary>
+public sealed record CybridQuoteDestinationAccount
+{
+    /// <summary>Único valor da spec: <c>external_wallet</c>.</summary>
+    public required string Type { get; init; }
+
+    public required string Guid { get; init; }
+    public long? ReceiveAmount { get; init; }
+    public long? DeliverAmount { get; init; }
 }
 
 /// <summary>Cotação — resposta de <c>POST/GET quotes</c>. Spec oficial v0.129, listagem validada ao vivo.</summary>

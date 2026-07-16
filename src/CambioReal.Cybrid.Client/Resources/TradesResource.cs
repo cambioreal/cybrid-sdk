@@ -10,11 +10,31 @@ public sealed class TradesResource
 
     internal TradesResource(CybridClient client) => this.client = client;
 
-    /// <summary>Lista trades do bank. <c>GET trades</c>.</summary>
+    /// <summary>
+    /// Lista trades do bank. <c>GET trades</c>. Filtros opcionais confirmados na spec oficial
+    /// (<c>guid</c>, <c>customer_guid</c>, <c>account_guid</c>, <c>state</c>, <c>side</c>,
+    /// <c>label</c>, faixas <c>created_at_gte/lt</c> e <c>updated_at_gte/lt</c> em ISO8601;
+    /// <c>bank_guid</c> é sempre o configurado, não exposto).
+    /// </summary>
     public Task<CybridListPage<CybridTrade>> ListAsync(
-        int page = 0, int perPage = 20, CancellationToken cancellationToken = default) =>
+        int page = 0, int perPage = 20, string? guid = null, string? customerGuid = null,
+        string? accountGuid = null, string? state = null, string? side = null, string? label = null,
+        DateTimeOffset? createdAtGte = null, DateTimeOffset? createdAtLt = null,
+        DateTimeOffset? updatedAtGte = null, DateTimeOffset? updatedAtLt = null,
+        CancellationToken cancellationToken = default) =>
         client.GetAsync<CybridListPage<CybridTrade>>(
-            CybridPaths.List(CybridPaths.Trades, client.BankGuid, page, perPage),
+            CybridPaths.List(CybridPaths.Trades, client.BankGuid, page, perPage,
+                CybridPaths.Filters(
+                    ("guid", guid),
+                    ("customer_guid", customerGuid),
+                    ("account_guid", accountGuid),
+                    ("state", state),
+                    ("side", side),
+                    ("label", label),
+                    ("created_at_gte", CybridPaths.Iso(createdAtGte)),
+                    ("created_at_lt", CybridPaths.Iso(createdAtLt)),
+                    ("updated_at_gte", CybridPaths.Iso(updatedAtGte)),
+                    ("updated_at_lt", CybridPaths.Iso(updatedAtLt)))),
             CybridScopes.TradesRead,
             cancellationToken);
 

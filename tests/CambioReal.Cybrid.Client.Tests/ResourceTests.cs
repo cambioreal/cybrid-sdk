@@ -135,4 +135,204 @@ public sealed class ResourceTests
 
         error.Message.ShouldContain("corpo JSON vazio");
     }
+
+    // --- Gaps P1 (4 reais) -------------------------------------------------------------------
+
+    [Fact]
+    public async Task CustomerPatchUsesWriteScopeAndSendsStateBody()
+    {
+        var (client, transport, tokens) = TestClient.CreateOk("""{"guid":"cust-1","state":"unverified"}""");
+
+        var customer = await client.Customers.PatchAsync(
+            "cust-1", new PatchCybridCustomerRequest { State = CybridCustomerPatchStates.Unverified });
+
+        customer.State.ShouldBe("unverified");
+        var request = transport.Requests.Single();
+        request.Method.ShouldBe(HttpMethod.Patch);
+        request.RequestUri!.ToString().ShouldBe("https://bank.sandbox.cybrid.app/api/customers/cust-1");
+        request.Body!.ShouldBe("""{"state":"unverified"}""");
+        tokens.RequestedScopes.ShouldBe([CybridScopes.CustomersWrite]);
+    }
+
+    [Fact]
+    public async Task IdentityVerificationsListInjectsBankGuidPaginationAndFilters()
+    {
+        var (client, transport, tokens) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        await client.IdentityVerifications.ListAsync(customerGuid: "cust-1", state: "completed");
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/identity_verifications?bank_guid=bank-guid-1&page=0&per_page=20"
+            + "&customer_guid=cust-1&state=completed");
+        tokens.RequestedScopes.ShouldBe([CybridScopes.IdentityVerificationsRead]);
+    }
+
+    [Fact]
+    public async Task ExternalBankAccountPatchUsesWriteScopeAndSendsStateBody()
+    {
+        var (client, transport, tokens) = TestClient.CreateOk("""{"guid":"eba-1","state":"completed"}""");
+
+        var account = await client.ExternalBankAccounts.PatchAsync(
+            "eba-1", new PatchCybridExternalBankAccountRequest { State = CybridExternalBankAccountPatchStates.Completed });
+
+        account.State.ShouldBe("completed");
+        var request = transport.Requests.Single();
+        request.Method.ShouldBe(HttpMethod.Patch);
+        request.Body!.ShouldBe("""{"state":"completed"}""");
+        tokens.RequestedScopes.ShouldBe([CybridScopes.ExternalBankAccountsWrite]);
+    }
+
+    /// <summary>
+    /// PATCH transfers é sensível (atualiza uma transferência financeira) — este teste é
+    /// contrato/mock puro (nunca contra sandbox real), confirmando shape e scope apenas.
+    /// </summary>
+    [Fact]
+    public async Task TransferPatchUsesWriteScopeAndSendsParticipantsBody()
+    {
+        var (client, transport, tokens) = TestClient.CreateOk("""{"guid":"t-1","state":"pending"}""");
+
+        var transfer = await client.Transfers.PatchAsync("t-1", new PatchCybridTransferRequest
+        {
+            DestinationParticipants =
+            [
+                new PatchCybridTransferParticipant { Type = "customer", Amount = 500, Guid = "cust-1" },
+            ],
+        });
+
+        transfer.State.ShouldBe("pending");
+        var request = transport.Requests.Single();
+        request.Method.ShouldBe(HttpMethod.Patch);
+        request.Body!.ShouldBe(
+            """{"destination_participants":[{"type":"customer","amount":500,"guid":"cust-1"}]}""");
+        tokens.RequestedScopes.ShouldBe([CybridScopes.TransfersWrite]);
+    }
+
+    // --- Parciais (list/get filtros) ----------------------------------------------------------
+
+    [Fact]
+    public async Task AccountsListWithFiltersBuildsQuery()
+    {
+        var (client, transport, _) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        await client.Accounts.ListAsync(guid: "a-1", type: "trading", owner: "customer", label: "vip");
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/accounts?bank_guid=bank-guid-1&page=0&per_page=20"
+            + "&guid=a-1&type=trading&owner=customer&label=vip");
+    }
+
+    [Fact]
+    public async Task CustomersListWithIncludePiiUsesDualScope()
+    {
+        var (client, transport, tokens) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        await client.Customers.ListAsync(includePii: true, type: "individual");
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/customers?bank_guid=bank-guid-1&page=0&per_page=20"
+            + "&type=individual&include_pii=true");
+        tokens.RequestedScopes.ShouldBe([$"{CybridScopes.CustomersRead} {CybridScopes.CustomersPiiRead}"]);
+    }
+
+    [Fact]
+    public async Task CounterpartiesListWithFiltersBuildsQuery()
+    {
+        var (client, transport, _) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        await client.Counterparties.ListAsync(type: "business", customerGuid: "cust-1");
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/counterparties?bank_guid=bank-guid-1&page=0&per_page=20"
+            + "&type=business&customer_guid=cust-1");
+    }
+
+    [Fact]
+    public async Task DepositBankAccountsListWithFiltersBuildsQuery()
+    {
+        var (client, transport, _) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        await client.DepositBankAccounts.ListAsync(state: "created", type: "fbo");
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/deposit_bank_accounts?bank_guid=bank-guid-1&page=0&per_page=20"
+            + "&type=fbo&state=created");
+    }
+
+    [Fact]
+    public async Task ExternalBankAccountsListWithFiltersBuildsQuery()
+    {
+        var (client, transport, _) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        await client.ExternalBankAccounts.ListAsync(asset: "USD", state: "completed");
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/external_bank_accounts?bank_guid=bank-guid-1&page=0&per_page=20"
+            + "&asset=USD&state=completed");
+    }
+
+    [Fact]
+    public async Task ExternalBankAccountGetWithOptionsBuildsQueryAndDualScopeWhenPiiRequested()
+    {
+        var (client, transport, tokens) = TestClient.CreateOk("""{"guid":"eba-1","state":"completed"}""");
+
+        await client.ExternalBankAccounts.GetAsync(
+            "eba-1", forceBalanceRefresh: true, includeBalances: true, includePii: true);
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/external_bank_accounts/eba-1"
+            + "?force_balance_refresh=true&include_balances=true&include_pii=true");
+        tokens.RequestedScopes.ShouldBe(
+            [$"{CybridScopes.ExternalBankAccountsRead} {CybridScopes.ExternalBankAccountsPiiRead}"]);
+    }
+
+    [Fact]
+    public async Task GetWithBalancesAsyncDelegatesToFlexibleOverloadWithAllTrue()
+    {
+        var (client, transport, tokens) = TestClient.CreateOk("""{"guid":"eba-1","state":"completed"}""");
+
+        await client.ExternalBankAccounts.GetWithBalancesAsync("eba-1");
+
+        transport.Requests.Single().RequestUri!.Query.ShouldBe(
+            "?force_balance_refresh=true&include_balances=true&include_pii=true");
+        tokens.RequestedScopes.ShouldBe(
+            [$"{CybridScopes.ExternalBankAccountsRead} {CybridScopes.ExternalBankAccountsPiiRead}"]);
+    }
+
+    [Fact]
+    public async Task QuotesListWithFiltersBuildsQuery()
+    {
+        var (client, transport, _) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        await client.Quotes.ListAsync(productType: CybridProductTypes.Trading, side: CybridQuoteSides.Buy);
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/quotes?bank_guid=bank-guid-1&page=0&per_page=20"
+            + "&product_type=trading&side=buy");
+    }
+
+    [Fact]
+    public async Task TradesListWithFiltersIncludingDateRangesBuildsQuery()
+    {
+        var (client, transport, _) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        var createdAtGte = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        await client.Trades.ListAsync(state: "completed", createdAtGte: createdAtGte);
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/trades?bank_guid=bank-guid-1&page=0&per_page=20"
+            + $"&state=completed&created_at_gte={Uri.EscapeDataString(createdAtGte.ToString("O"))}");
+    }
+
+    [Fact]
+    public async Task TransfersListWithFiltersIncludingDateRangesBuildsQuery()
+    {
+        var (client, transport, _) = TestClient.CreateOk("""{"total":0,"page":0,"per_page":20,"objects":[]}""");
+
+        var updatedAtLt = new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero);
+        await client.Transfers.ListAsync(transferType: "funding", updatedAtLt: updatedAtLt);
+
+        transport.Requests.Single().RequestUri!.ToString().ShouldBe(
+            "https://bank.sandbox.cybrid.app/api/transfers?bank_guid=bank-guid-1&page=0&per_page=20"
+            + $"&transfer_type=funding&updated_at_lt={Uri.EscapeDataString(updatedAtLt.ToString("O"))}");
+    }
 }

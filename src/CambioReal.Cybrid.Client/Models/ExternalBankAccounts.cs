@@ -19,6 +19,16 @@ public sealed record CreateCybridExternalBankAccountRequest
     public string? PlaidPublicToken { get; init; }
     public string? PlaidAccountId { get; init; }
     public string? PlaidProcessorToken { get; init; }
+
+    /// <summary>Institution ID do Plaid — obrigatório quando <see cref="AccountKind"/> é <c>plaid_processor_token</c>.</summary>
+    public string? PlaidInstitutionId { get; init; }
+
+    /// <summary>Máscara da conta (últimos dígitos) — obrigatório quando <see cref="AccountKind"/> é <c>plaid_processor_token</c>.</summary>
+    public string? PlaidAccountMask { get; init; }
+
+    /// <summary>Nome da conta no Plaid — obrigatório quando <see cref="AccountKind"/> é <c>plaid_processor_token</c>.</summary>
+    public string? PlaidAccountName { get; init; }
+
     public JsonElement? CounterpartyBankAccount { get; init; }
 
     /// <summary>
@@ -30,6 +40,27 @@ public sealed record CreateCybridExternalBankAccountRequest
     public CybridName? CounterpartyName { get; init; }
     public CybridAddress? CounterpartyAddress { get; init; }
     public string? CounterpartyEmailAddress { get; init; }
+}
+
+/// <summary>
+/// Corpo de <c>PATCH external_bank_accounts/{guid}</c> — spec oficial (<c>PatchExternalBankAccount</c>).
+/// Único campo aceito é <c>state</c>, obrigatório, com dois valores possíveis. Ver
+/// <see cref="CybridExternalBankAccountPatchStates"/>.
+/// </summary>
+public sealed record PatchCybridExternalBankAccountRequest
+{
+    /// <summary>
+    /// Se <c>completed</c>: a API devolve <c>completed</c> (se a conta já foi verificada) ou
+    /// <c>unverified</c> (senão). Valores da spec: <c>completed</c>, <c>refresh_required</c>.
+    /// </summary>
+    public required string State { get; init; }
+}
+
+/// <summary>Valores aceitos por <see cref="PatchCybridExternalBankAccountRequest.State"/> (spec oficial: enum fechado).</summary>
+public static class CybridExternalBankAccountPatchStates
+{
+    public const string Completed = "completed";
+    public const string RefreshRequired = "refresh_required";
 }
 
 /// <summary>External bank account — spec oficial v0.129, listagem validada ao vivo (131 reais).</summary>

@@ -51,10 +51,28 @@ public static class CybridScopes
     public const string AccountsExecute = "accounts:execute";
     public const string CustomersRead = "customers:read";
     public const string CustomersExecute = "customers:execute";
+
+    /// <summary><c>PATCH customers/{guid}</c> — spec oficial: scope distinto de <see cref="CustomersExecute"/>.</summary>
+    public const string CustomersWrite = "customers:write";
+
+    /// <summary>PII opcional em <c>GET customers</c>/<c>GET customers/{guid}</c> (<c>include_pii=true</c>).</summary>
+    public const string CustomersPiiRead = "customers:pii:read";
+
     public const string CounterpartiesRead = "counterparties:read";
     public const string CounterpartiesExecute = "counterparties:execute";
+
+    /// <summary>PII opcional em <c>GET counterparties</c>/<c>GET counterparties/{guid}</c> (<c>include_pii=true</c>).</summary>
+    public const string CounterpartiesPiiRead = "counterparties:pii:read";
+
     public const string ExternalBankAccountsRead = "external_bank_accounts:read";
     public const string ExternalBankAccountsExecute = "external_bank_accounts:execute";
+
+    /// <summary><c>PATCH external_bank_accounts/{guid}</c> — spec oficial: scope distinto de <see cref="ExternalBankAccountsExecute"/>.</summary>
+    public const string ExternalBankAccountsWrite = "external_bank_accounts:write";
+
+    /// <summary>PII opcional em <c>GET external_bank_accounts/{guid}</c> (<c>include_pii=true</c>).</summary>
+    public const string ExternalBankAccountsPiiRead = "external_bank_accounts:pii:read";
+
     public const string DepositBankAccountsRead = "deposit_bank_accounts:read";
     public const string DepositBankAccountsExecute = "deposit_bank_accounts:execute";
     public const string IdentityVerificationsRead = "identity_verifications:read";
@@ -65,5 +83,9 @@ public static class CybridScopes
     public const string TradesExecute = "trades:execute";
     public const string TransfersRead = "transfers:read";
     public const string TransfersExecute = "transfers:execute";
+
+    /// <summary><c>PATCH transfers/{guid}</c> — spec oficial: scope distinto de <see cref="TransfersExecute"/>.</summary>
+    public const string TransfersWrite = "transfers:write";
+
     public const string PricesRead = "prices:read";
 }

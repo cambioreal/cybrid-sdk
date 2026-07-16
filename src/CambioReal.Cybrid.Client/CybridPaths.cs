@@ -41,4 +41,39 @@ internal static class CybridPaths
     public static string List(string resource, string bankGuid, int page, int perPage, string? extra = null) =>
         $"{resource}?bank_guid={Uri.EscapeDataString(bankGuid)}&page={page}&per_page={perPage}"
         + (string.IsNullOrEmpty(extra) ? string.Empty : $"&{extra}");
+
+    /// <summary>
+    /// Monta a query extra de uma listagem a partir de filtros opcionais nomeados (nome já em
+    /// <c>snake_case</c>, valor URL-escapado). Filtros com valor nulo/vazio são omitidos. Devolve
+    /// <see langword="null"/> se nenhum filtro foi informado — mesma convenção do parâmetro
+    /// <c>extra</c> de <see cref="List"/>.
+    /// </summary>
+    public static string? Filters(params (string Name, string? Value)[] filters)
+    {
+        List<string>? parts = null;
+
+        foreach (var (name, value) in filters)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                continue;
+            }
+
+            parts ??= [];
+            parts.Add($"{name}={Uri.EscapeDataString(value)}");
+        }
+
+        return parts is null ? null : string.Join('&', parts);
+    }
+
+    /// <summary>Formata um filtro booleano de query como <c>"true"</c>/<c>"false"</c> (lowercase) — convenção da spec oficial.</summary>
+    public static string? Bool(bool? value) => value switch
+    {
+        null => null,
+        true => "true",
+        false => "false",
+    };
+
+    /// <summary>Formata um filtro de data/hora como ISO8601 — convenção dos filtros <c>*_at_gte</c>/<c>*_at_lt</c> da spec oficial.</summary>
+    public static string? Iso(DateTimeOffset? value) => value?.ToString("O");
 }

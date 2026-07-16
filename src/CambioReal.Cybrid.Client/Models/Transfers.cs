@@ -23,7 +23,48 @@ public sealed record CreateCybridTransferRequest
     public string? ExternalWalletGuid { get; init; }
     public IReadOnlyList<CybridTransferParticipant>? SourceParticipants { get; init; }
     public IReadOnlyList<CybridTransferParticipant>? DestinationParticipants { get; init; }
+
+    /// <summary>Identificador da deposit bank account — só válido para withdrawals. Opcional quando <c>transfer_type</c> é <c>funding</c>.</summary>
+    public string? SendAsDepositBankAccountGuid { get; init; }
+
+    /// <summary>Conta fiat do bank a usar na transfer — obrigatório se o bank tiver múltiplas contas fiat (rails <c>instant_funding</c>/<c>lightning</c>).</summary>
+    public string? BankFiatAccountGuid { get; init; }
+
+    /// <summary>Conta fiat do customer a usar na transfer — obrigatório se o customer tiver múltiplas contas fiat (rails <c>instant_funding</c>/<c>lightning</c>).</summary>
+    public string? CustomerFiatAccountGuid { get; init; }
+
+    /// <summary>Conta que paga a network fee (lightning) — fiat ou trading do customer/bank.</summary>
+    public string? NetworkFeeAccountGuid { get; init; }
+
+    /// <summary>
+    /// Comportamento simulado, só em sandbox (<c>force_review</c> força revisão manual em
+    /// transfers <c>funding</c>/<c>instant_funding</c>). NUNCA usar em produção.
+    /// </summary>
+    public IReadOnlyList<string>? ExpectedBehaviours { get; init; }
+
     public IReadOnlyList<string>? Labels { get; init; }
+}
+
+/// <summary>
+/// Corpo de <c>PATCH transfers/{guid}</c> — spec oficial (<c>PatchTransfer</c>). Único uso
+/// documentado: (re)definir os participantes de uma transfer em andamento. **Sensível** — atualiza
+/// uma transferência financeira; nunca exercitado contra sandbox (só contrato/mock).
+/// </summary>
+public sealed record PatchCybridTransferRequest
+{
+    public IReadOnlyList<PatchCybridTransferParticipant>? SourceParticipants { get; init; }
+    public IReadOnlyList<PatchCybridTransferParticipant>? DestinationParticipants { get; init; }
+}
+
+/// <summary>
+/// Participante de transfer no PATCH — diferente de <see cref="CybridTransferParticipant"/> (POST):
+/// aqui os três campos são obrigatórios pela spec oficial (<c>PatchTransferParticipant</c>).
+/// </summary>
+public sealed record PatchCybridTransferParticipant
+{
+    public required string Type { get; init; }
+    public required long Amount { get; init; }
+    public required string Guid { get; init; }
 }
 
 /// <summary>Participante de transfer (<c>type</c>/<c>amount</c> obrigatórios na spec).</summary>
