@@ -113,6 +113,49 @@ public sealed class CybridSandboxTests
     }
 
     /// <summary>
+    /// Gap P1 fechado: <c>GET identity_verifications</c> (listagem) não existia — só GET por guid.
+    /// Leitura pura, sem opt-in adicional (mesma política dos demais <c>*ListLive</c>).
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Sandbox")]
+    public async Task IdentityVerificationsListLive()
+    {
+        using var provider = BuildServiceProvider();
+        var client = provider.GetRequiredService<CybridClient>();
+
+        var verifications = await client.IdentityVerifications.ListAsync(perPage: 5);
+        output.WriteLine($"GET identity_verifications: 200, total={verifications.Total}.");
+
+        if (verifications.Objects.Count > 0 && !string.IsNullOrWhiteSpace(verifications.Objects[0].Guid))
+        {
+            var verification = await client.IdentityVerifications.GetAsync(verifications.Objects[0].Guid!);
+            verification.Guid.ShouldBe(verifications.Objects[0].Guid);
+            output.WriteLine($"GET identity_verifications/{{guid}}: 200, state={verification.State}.");
+        }
+    }
+
+    /// <summary>
+    /// Parciais (list/get filtros) fechados nos recursos já cobertos — leitura pura, sem opt-in
+    /// adicional. Confirma que os novos parâmetros de query não quebram a chamada real.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Sandbox")]
+    public async Task ListFiltersWorkAgainstLiveSandbox()
+    {
+        using var provider = BuildServiceProvider();
+        var client = provider.GetRequiredService<CybridClient>();
+
+        var customers = await client.Customers.ListAsync(perPage: 3, type: "individual");
+        output.WriteLine($"GET customers?type=individual: 200, total={customers.Total}.");
+
+        var transfers = await client.Transfers.ListAsync(perPage: 3, state: "completed");
+        output.WriteLine($"GET transfers?state=completed: 200, total={transfers.Total}.");
+
+        var externalBankAccounts = await client.ExternalBankAccounts.ListAsync(perPage: 3, state: "completed");
+        output.WriteLine($"GET external_bank_accounts?state=completed: 200, total={externalBankAccounts.Total}.");
+    }
+
+    /// <summary>
     /// Criação de QUOTE trading — read-like pelo goal §0.4 ("quote não vinculante"): expira
     /// sozinha (<c>expires_at</c>), não move fundos; a execução (trade) é que seria financeira e
     /// NÃO acontece aqui. Opt-in duplo: credenciais + <c>CYBRID_SANDBOX_ALLOW_WRITE=1</c>.

@@ -40,3 +40,13 @@ Passed: 6, Failed: 0, Total: 6
 Achado capturado por estes testes: `supported_payout_symbols` no bank vem como array de OBJETOS
 (`{symbol, country_code, participants_type, route}`) na resposta viva — a spec v0.129 declara
 array de string. Modelado a partir da realidade (`CybridPayoutSymbol`).
+
+## Gaps P1 (0.2.0) — testes de leitura adicionados, ainda não exercitados ao vivo
+
+`IdentityVerificationsListLive` (gap `GET identity_verifications`) e `ListFiltersWorkAgainstLiveSandbox`
+(filtros novos em customers/transfers/external_bank_accounts) foram adicionados neste ciclo — são
+leitura pura, sem opt-in de escrita. Ainda não rodados contra o sandbox real nesta sessão (sem
+`pass show`/credenciais neste ambiente); rodar na próxima janela com `CYBRID_SANDBOX_*` antes de
+publicar a "última execução ao vivo" atualizada. `PATCH customers`/`PATCH external_bank_accounts`/
+`PATCH transfers` **não têm teste sandbox por design** — só contrato/mock (`CambioReal.Cybrid.Client.Tests`),
+mesma política de `Trades.CreateAsync`/`Transfers.CreateAsync`.

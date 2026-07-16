@@ -101,6 +101,14 @@ public sealed class CybridClient
         return await SendAndReadAsync<TResponse>(request, cancellationToken);
     }
 
+    internal async Task<TResponse> PatchAsync<TRequest, TResponse>(
+        string path, TRequest body, string scope, CancellationToken cancellationToken)
+    {
+        var content = JsonContent.Create(body, options: CybridJson.Options);
+        using var request = CreateRequest(HttpMethod.Patch, path, scope, content);
+        return await SendAndReadAsync<TResponse>(request, cancellationToken);
+    }
+
     private static HttpRequestMessage CreateRequest(HttpMethod method, string path, string scope, HttpContent? content)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

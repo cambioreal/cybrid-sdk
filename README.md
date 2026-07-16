@@ -54,10 +54,13 @@ sem um client nomeado por scope.
 
 ## Testes
 
-- `tests/CambioReal.Cybrid.Client.Tests` — 29 testes unit/contrato (serialização snake_case,
+- `tests/CambioReal.Cybrid.Client.Tests` — 51 testes unit/contrato (serialização snake_case,
   token por scope com cache/skew/single-flight, resources com asserção de scope, erros
-  `message_code`, retry 401, cancellation).
-- `tests/CambioReal.Cybrid.Client.SandboxTests` — 6 testes de integração sandbox opt-in, FORA da
+  `message_code`, retry 401, cancellation). Inclui os 4 gaps P1 (`PATCH customers`,
+  `GET identity_verifications` listagem, `PATCH external_bank_accounts`, `PATCH transfers` — os
+  três PATCH só como contrato/mock, nunca exercitados) e os filtros de listagem/campos de request
+  fechados nos 13 recursos parciais (0.2.0 — ver `CHANGELOG` do PR).
+- `tests/CambioReal.Cybrid.Client.SandboxTests` — 8 testes de integração sandbox opt-in, FORA da
   solution. Ver o [README](tests/CambioReal.Cybrid.Client.SandboxTests/README.md) com a última
   execução ao vivo.
 

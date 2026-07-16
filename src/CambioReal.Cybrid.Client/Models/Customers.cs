@@ -16,6 +16,25 @@ public sealed record CreateCybridCustomerRequest
     public IReadOnlyList<string>? Labels { get; init; }
 }
 
+/// <summary>
+/// Corpo de <c>PATCH customers/{guid}</c> — spec oficial (<c>PatchCustomer</c>). O ÚNICO campo
+/// aceito é <c>state</c>, e o ÚNICO valor permitido é <c>unverified</c> (reseta o customer para o
+/// pipeline KYC, forçando nova verificação). NÃO é um update genérico de PII — endereço, telefone
+/// e e-mail não são alteráveis por este endpoint apesar do nome sugerir o contrário; confirmado
+/// contra o schema oficial <c>PatchCustomer</c> (<c>bank.sandbox.cybrid.app/api/schema/v1/swagger.yaml</c>).
+/// </summary>
+public sealed record PatchCybridCustomerRequest
+{
+    /// <summary>Único valor aceito pela spec: <c>unverified</c>. Ver <see cref="CybridCustomerPatchStates"/>.</summary>
+    public string? State { get; init; }
+}
+
+/// <summary>Valores aceitos por <see cref="PatchCybridCustomerRequest.State"/> (spec oficial: enum fechado de 1 valor).</summary>
+public static class CybridCustomerPatchStates
+{
+    public const string Unverified = "unverified";
+}
+
 /// <summary>Customer — spec oficial v0.129, listagem validada ao vivo (208 customers reais).</summary>
 public sealed record CybridCustomer
 {

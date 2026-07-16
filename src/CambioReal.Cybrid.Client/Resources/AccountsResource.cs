@@ -10,12 +10,22 @@ public sealed class AccountsResource
 
     internal AccountsResource(CybridClient client) => this.client = client;
 
-    /// <summary>Lista contas do bank. <c>GET accounts</c> — validado ao vivo (65 contas reais).</summary>
+    /// <summary>
+    /// Lista contas do bank. <c>GET accounts</c> — validado ao vivo (65 contas reais). Filtros
+    /// opcionais confirmados na spec oficial (<c>owner</c>, <c>guid</c>, <c>type</c>,
+    /// <c>customer_guid</c>, <c>label</c>; <c>bank_guid</c> é sempre o configurado, não exposto).
+    /// </summary>
     public Task<CybridListPage<CybridAccount>> ListAsync(
-        int page = 0, int perPage = 20, string? customerGuid = null, CancellationToken cancellationToken = default) =>
+        int page = 0, int perPage = 20, string? customerGuid = null, string? guid = null, string? type = null,
+        string? owner = null, string? label = null, CancellationToken cancellationToken = default) =>
         client.GetAsync<CybridListPage<CybridAccount>>(
             CybridPaths.List(CybridPaths.Accounts, client.BankGuid, page, perPage,
-                customerGuid is null ? null : $"customer_guid={Uri.EscapeDataString(customerGuid)}"),
+                CybridPaths.Filters(
+                    ("customer_guid", customerGuid),
+                    ("guid", guid),
+                    ("type", type),
+                    ("owner", owner),
+                    ("label", label))),
             CybridScopes.AccountsRead,
             cancellationToken);
 
