@@ -37,10 +37,18 @@ public static class CybridServiceCollectionExtensions
         services.AddOptions<CybridOptions>().Validate(
             options =>
             {
-                options.Validate();
-                return true;
+                try
+                {
+                    options.Validate();
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    return false;
+                }
             },
-            "A configuração do CybridOptions é inválida.");
+            "A configuração do CybridOptions é inválida.")
+            .ValidateOnStart();
 
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<ICybridTokenProvider, CybridTokenProvider>();
